@@ -13,10 +13,16 @@ document.addEventListener('DOMContentLoaded', function () {
         name: 'Perangkat Saya',
         battery: null,
         location: null,
-        qrCode: null
+        id: generateUniqueId() // Menambahkan ID unik untuk perangkat
     };
 
     let connectedDevices = JSON.parse(localStorage.getItem('connectedDevices')) || [];
+    let map = null;
+
+    // Fungsi untuk menghasilkan ID unik
+    function generateUniqueId() {
+        return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    }
 
     // Meminta izin lokasi
     if (navigator.geolocation) {
@@ -27,14 +33,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     lng: position.coords.longitude
                 };
                 updateDeviceInfo();
-                showMap(deviceData.location.lat, deviceData.location.lng);
+                initMap();
             },
             (error) => {
                 console.error('Error getting location:', error);
+                alert('Tidak dapat mendapatkan lokasi. Pastikan izin lokasi diberikan.');
             }
         );
     } else {
         console.error('Geolocation is not supported by this browser.');
+        alert('Browser Anda tidak mendukung fitur lokasi.');
     }
 
     // Mendapatkan status baterai
@@ -42,9 +50,46 @@ document.addEventListener('DOMContentLoaded', function () {
         navigator.getBattery().then((battery) => {
             deviceData.battery = `${Math.round(battery.level * 100)}%`;
             updateDeviceInfo();
+            
+            // Tambahkan event listener untuk pembaruan baterai
+            battery.addEventListener('levelchange', () => {
+                deviceData.battery = `${Math.round(battery.level * 100)}%`;
+                updateDeviceInfo();
+            });
         });
     } else {
         console.error('Battery Status API is not supported by this browser.');
+        deviceData.battery = 'Tidak tersedia';
+        updateDeviceInfo();
+    }
+
+    // Inisialisasi peta
+    function initMap() {
+        if (!deviceData.location) return;
+        
+        if (map) {
+            map.remove();
+        }
+        
+        map = L.map(mapElement).setView([deviceData.location.lat, deviceData.location.lng], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // Tambahkan marker untuk perangkat saat ini
+        L.marker([deviceData.location.lat, deviceData.location.lng])
+            .addTo(map)
+            .bindPopup(`${deviceData.name} (Perangkat Ini)`)
+            .openPopup();
+        
+        // Tambahkan marker untuk perangkat terhubung
+        connectedDevices.forEach(device => {
+            if (device.location) {
+                L.marker([device.location.lat, device.location.lng])
+                    .addTo(map)
+                    .bindPopup(device.name);
+            }
+        });
     }
 
     // Membuat QR Code
@@ -62,34 +107,52 @@ document.addEventListener('DOMContentLoaded', function () {
         deviceInfo.innerHTML = `
             <h3>${deviceData.name}</h3>
             <p>Baterai: ${deviceData.battery || 'Tidak tersedia'}</p>
-            <p>Lokasi: ${deviceData.location ? `${deviceData.location.lat}, ${deviceData.location.lng}` : 'Tidak tersedia'}</p>
+            <p>Lokasi: ${deviceData.location ? `${deviceData.location.lat.toFixed(4)}, ${deviceData.location.lng.toFixed(4)}` : 'Tidak tersedia'}</p>
+            <p>ID Perangkat: ${deviceData.id}</p>
         `;
         generateQRCode(deviceData);
     }
 
-    // Menampilkan peta
-    function showMap(lat, lng) {
-        const map = L.map(mapElement).setView([lat, lng], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-        L.marker([lat, lng]).addTo(map)
-            .bindPopup('Lokasi Perangkat')
-            .openPopup();
+    // Membunyikan perangkat yang terhubung
+    function playSound(deviceId = null) {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        // Untuk efek nada yang lebih baik
+        oscillator.start();
+        
+        // Buat suara dengan pola beep-beep
+        let counter = 0;
+        const beepInterval = setInterval(() => {
+            if (counter % 2 === 0) {
+                gainNode.gain.value = 0.5;
+            } else {
+                gainNode.gain.value = 0;
+            }
+            counter++;
+            
+            if (counter >= 10) {
+                clearInterval(beepInterval);
+                oscillator.stop();
+            }
+        }, 300);
     }
 
-    // Membunyikan perangkat yang terhubung
-    playSoundButton.addEventListener('click', function () {
+    // Fungsi untuk membunyikan perangkat tertentu
+    playSoundButton.addEventListener('click', function() {
         if (connectedDevices.length > 0) {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            oscillator.type = 'square';
-            oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // Frekuensi 440 Hz
-            oscillator.connect(audioContext.destination);
-            oscillator.start();
-            setTimeout(() => {
-                oscillator.stop();
-            }, 1000); // Bunyi selama 1 detik
+            // Jika ada perangkat terhubung, tampilkan dialog untuk memilih perangkat
+            const deviceSelection = confirm('Bunyikan semua perangkat terhubung?');
+            if (deviceSelection) {
+                playSound();
+                alert('Membunyikan semua perangkat terhubung');
+            }
         } else {
             alert('Tidak ada perangkat yang terhubung.');
         }
@@ -100,7 +163,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (navigator.share) {
             navigator.share({
                 title: 'Bagikan Perangkat',
-                text: `Perangkat: ${deviceData.name}, Baterai: ${deviceData.battery}, Lokasi: ${deviceData.location ? `${deviceData.location.lat}, ${deviceData.location.lng}` : 'Tidak tersedia'}`,
+                text: `Perangkat: ${deviceData.name}, Baterai: ${deviceData.battery}, Lokasi: ${deviceData.location ? `${deviceData.location.lat.toFixed(4)}, ${deviceData.location.lng.toFixed(4)}` : 'Tidak tersedia'}`,
                 url: window.location.href
             }).then(() => {
                 console.log('Perangkat berhasil dibagikan.');
@@ -108,44 +171,100 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Error sharing:', error);
             });
         } else {
-            console.error('Web Share API is not supported by this browser.');
+            const url = `${window.location.href}?device=${encodeURIComponent(JSON.stringify(deviceData))}`;
+            prompt('Salin URL ini untuk membagikan perangkat:', url);
         }
     });
 
     // Memindai barcode
     scanBarcodeButton.addEventListener('click', function () {
         scannerElement.style.display = 'block';
+        
+        // Bersihkan elemen pemindai sebelum memulai
+        const interactiveElement = document.getElementById('interactive');
+        while (interactiveElement.firstChild) {
+            interactiveElement.removeChild(interactiveElement.firstChild);
+        }
+        
+        // Inisialisasi Quagga
         Quagga.init({
             inputStream: {
                 name: "Live",
                 type: "LiveStream",
-                target: document.querySelector('#interactive'),
+                target: interactiveElement,
                 constraints: {
+                    width: 640,
+                    height: 480,
                     facingMode: "environment" // Menggunakan kamera belakang
                 }
             },
+            locator: {
+                patchSize: "medium",
+                halfSample: true
+            },
+            numOfWorkers: 2,
+            frequency: 10,
             decoder: {
-                readers: ["code_128_reader", "qr_code_reader"]
-            }
+                readers: [
+                    "code_128_reader",
+                    "ean_reader",
+                    "ean_8_reader",
+                    "code_39_reader",
+                    "code_39_vin_reader",
+                    "codabar_reader",
+                    "upc_reader",
+                    "upc_e_reader",
+                    "i2of5_reader",
+                    "2of5_reader",
+                    "code_93_reader",
+                    "qr_code_reader"
+                ]
+            },
+            locate: true
         }, function (err) {
             if (err) {
                 console.error('Error initializing Quagga:', err);
                 alert('Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.');
+                scannerElement.style.display = 'none';
                 return;
             }
+            console.log('Quagga initialized successfully');
             Quagga.start();
         });
 
+        // Event listener untuk deteksi barcode
         Quagga.onDetected(function (result) {
-            const code = result.codeResult.code;
+            console.log('Barcode detected:', result.codeResult.code);
+            
             try {
-                const device = JSON.parse(code); // Mengubah QR code menjadi objek perangkat
-                connectedDevices.push(device);
-                localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
-                renderConnectedDevices();
-                scannerElement.style.display = 'none';
+                const scannedDeviceData = JSON.parse(result.codeResult.code);
+                console.log('Parsed device data:', scannedDeviceData);
+                
+                // Periksa apakah perangkat sudah ada dalam daftar
+                const existingDeviceIndex = connectedDevices.findIndex(device => device.id === scannedDeviceData.id);
+                
+                if (existingDeviceIndex === -1) {
+                    // Tambahkan perangkat baru ke daftar
+                    connectedDevices.push(scannedDeviceData);
+                    localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
+                    
+                    alert(`Perangkat "${scannedDeviceData.name}" berhasil ditambahkan!`);
+                } else {
+                    // Perbarui informasi perangkat yang sudah ada
+                    connectedDevices[existingDeviceIndex] = scannedDeviceData;
+                    localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
+                    
+                    alert(`Informasi perangkat "${scannedDeviceData.name}" berhasil diperbarui!`);
+                }
+                
+                // Hentikan pemindaian dan tutup scanner
                 Quagga.stop();
-                alert(`Perangkat "${device.name}" berhasil ditambahkan!`);
+                scannerElement.style.display = 'none';
+                
+                // Perbarui UI
+                renderConnectedDevices();
+                initMap();
+                
             } catch (error) {
                 console.error('Error parsing QR code:', error);
                 alert('QR code tidak valid. Pastikan QR code berisi informasi perangkat yang benar.');
@@ -161,20 +280,116 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Menampilkan daftar perangkat yang terhubung
     function renderConnectedDevices() {
-        connectedDevicesElement.innerHTML = '';
+        connectedDevicesElement.innerHTML = '<h2>Perangkat Terhubung</h2>';
+        
+        if (connectedDevices.length === 0) {
+            connectedDevicesElement.innerHTML += '<p>Tidak ada perangkat terhubung. Pindai QR code untuk menambahkan perangkat.</p>';
+            return;
+        }
+        
         connectedDevices.forEach((device, index) => {
             const deviceElement = document.createElement('div');
             deviceElement.className = 'connected-device';
             deviceElement.innerHTML = `
                 <h3>${device.name}</h3>
-                <p>Baterai: ${device.battery}</p>
-                <p>Lokasi: ${device.location ? `${device.location.lat}, ${device.location.lng}` : 'Tidak tersedia'}</p>
-                <button onclick="playSound()">Bunyikan</button>
+                <p>Baterai: ${device.battery || 'Tidak tersedia'}</p>
+                <p>Lokasi: ${device.location ? `${device.location.lat.toFixed(4)}, ${device.location.lng.toFixed(4)}` : 'Tidak tersedia'}</p>
+                <button class="sound-button" data-device-id="${device.id}">Bunyikan</button>
+                <button class="locate-button" data-device-id="${device.id}">Temukan</button>
+                <button class="remove-button" data-device-id="${device.id}">Hapus</button>
             `;
             connectedDevicesElement.appendChild(deviceElement);
         });
+        
+        // Tambahkan event listener untuk tombol bunyikan
+        document.querySelectorAll('.sound-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const deviceId = this.getAttribute('data-device-id');
+                playSound(deviceId);
+                alert('Membunyikan perangkat...');
+            });
+        });
+        
+        // Tambahkan event listener untuk tombol temukan
+        document.querySelectorAll('.locate-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const deviceId = this.getAttribute('data-device-id');
+                const device = connectedDevices.find(d => d.id === deviceId);
+                
+                if (device && device.location) {
+                    if (map) {
+                        map.setView([device.location.lat, device.location.lng], 15);
+                        // Tambahkan popup untuk menunjukkan lokasi perangkat
+                        L.popup()
+                            .setLatLng([device.location.lat, device.location.lng])
+                            .setContent(`<b>${device.name}</b><br>Lokasi terakhir`)
+                            .openOn(map);
+                    }
+                } else {
+                    alert('Lokasi perangkat tidak tersedia.');
+                }
+            });
+        });
+        
+        // Tambahkan event listener untuk tombol hapus
+        document.querySelectorAll('.remove-button').forEach(button => {
+            button.addEventListener('click', function() {
+                const deviceId = this.getAttribute('data-device-id');
+                const deviceIndex = connectedDevices.findIndex(d => d.id === deviceId);
+                
+                if (deviceIndex !== -1) {
+                    const deviceName = connectedDevices[deviceIndex].name;
+                    if (confirm(`Hapus perangkat "${deviceName}"?`)) {
+                        connectedDevices.splice(deviceIndex, 1);
+                        localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
+                        renderConnectedDevices();
+                        initMap();
+                        alert(`Perangkat "${deviceName}" berhasil dihapus.`);
+                    }
+                }
+            });
+        });
     }
 
-    // Render perangkat yang terhubung saat pertama kali dimuat
+    // Periksa parameter URL untuk perangkat yang dibagikan
+    function checkSharedDevice() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedDeviceParam = urlParams.get('device');
+        
+        if (sharedDeviceParam) {
+            try {
+                const sharedDevice = JSON.parse(decodeURIComponent(sharedDeviceParam));
+                
+                // Periksa apakah perangkat sudah ada dalam daftar
+                const existingDeviceIndex = connectedDevices.findIndex(device => device.id === sharedDevice.id);
+                
+                if (existingDeviceIndex === -1) {
+                    // Tambahkan perangkat baru ke daftar
+                    connectedDevices.push(sharedDevice);
+                    localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
+                    alert(`Perangkat "${sharedDevice.name}" berhasil ditambahkan dari tautan yang dibagikan!`);
+                } else {
+                    // Perbarui informasi perangkat yang sudah ada
+                    connectedDevices[existingDeviceIndex] = sharedDevice;
+                    localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
+                    alert(`Informasi perangkat "${sharedDevice.name}" berhasil diperbarui dari tautan yang dibagikan!`);
+                }
+                
+                // Perbarui UI
+                renderConnectedDevices();
+                initMap();
+                
+                // Hapus parameter URL untuk menghindari penambahan berulang
+                window.history.replaceState({}, document.title, window.location.pathname);
+            } catch (error) {
+                console.error('Error parsing shared device data:', error);
+                alert('Data perangkat yang dibagikan tidak valid.');
+            }
+        }
+    }
+
+    // Inisialisasi aplikasi
+    updateDeviceInfo();
     renderConnectedDevices();
+    checkSharedDevice(); // Periksa parameter URL untuk perangkat yang dibagikan
 });
