@@ -46,3 +46,32 @@ button:hover {
     height: 300px;
     margin-top: 20px;
 }
+
+#scanner {
+    margin: 20px auto;
+    text-align: center;
+}
+
+#interactive {
+    width: 100%;
+    height: 300px;
+    background-color: #000;
+    margin-bottom: 10px;
+}
+
+#stop-scan {
+    background-color: #dc3545;
+}
+
+#stop-scan:hover {
+    background-color: #c82333;
+}
+
+.connected-device {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.connected-device:last-child {
+    border-bottom: none;
+}
