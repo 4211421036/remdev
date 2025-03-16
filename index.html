@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lacak Perangkat</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Lacak Perangkat</h1>
+        <div id="device-info">
+            <!-- Informasi perangkat akan muncul di sini -->
+        </div>
+        <div id="qr-code"></div>
+        <button id="share-device">Bagikan Perangkat</button>
+        <button id="play-sound">Bunyikan Perangkat</button>
+        <div id="map" style="height: 300px; margin-top: 20px;"></div>
+    </div>
+
+    <!-- Library untuk QR Code -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Library untuk OpenStreetMap -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="scripts.js"></script>
+</body>
+</html>
