@@ -119,7 +119,10 @@ document.addEventListener('DOMContentLoaded', function () {
             inputStream: {
                 name: "Live",
                 type: "LiveStream",
-                target: document.querySelector('#interactive')
+                target: document.querySelector('#interactive'),
+                constraints: {
+                    facingMode: "environment" // Menggunakan kamera belakang
+                }
             },
             decoder: {
                 readers: ["code_128_reader", "qr_code_reader"]
@@ -134,11 +137,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
         Quagga.onDetected(function (result) {
             const code = result.codeResult.code;
-            const device = JSON.parse(code); // Mengubah QR code menjadi objek perangkat
-            connectedDevices.push(device);
-            renderConnectedDevices();
-            scannerElement.style.display = 'none';
-            Quagga.stop();
+            try {
+                const device = JSON.parse(code); // Mengubah QR code menjadi objek perangkat
+                connectedDevices.push(device);
+                renderConnectedDevices();
+                scannerElement.style.display = 'none';
+                Quagga.stop();
+            } catch (error) {
+                console.error('Error parsing QR code:', error);
+            }
         });
     });
 
