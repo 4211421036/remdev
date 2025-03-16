@@ -3,6 +3,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const qrCodeElement = document.getElementById('qr-code');
     const shareDeviceButton = document.getElementById('share-device');
     const playSoundButton = document.getElementById('play-sound');
+    const scanBarcodeButton = document.getElementById('scan-barcode');
+    const scannerElement = document.getElementById('scanner');
+    const stopScanButton = document.getElementById('stop-scan');
+    const connectedDevicesElement = document.getElementById('connected-devices');
     const mapElement = document.getElementById('map');
 
     let deviceData = {
@@ -11,6 +15,8 @@ document.addEventListener('DOMContentLoaded', function () {
         location: null,
         qrCode: null
     };
+
+    let connectedDevices = []; // Daftar perangkat yang terhubung
 
     // Meminta izin lokasi
     if (navigator.geolocation) {
@@ -72,17 +78,21 @@ document.addEventListener('DOMContentLoaded', function () {
             .openPopup();
     }
 
-    // Membunyikan perangkat
+    // Membunyikan perangkat yang terhubung
     playSoundButton.addEventListener('click', function () {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // Frekuensi 440 Hz
-        oscillator.connect(audioContext.destination);
-        oscillator.start();
-        setTimeout(() => {
-            oscillator.stop();
-        }, 1000); // Bunyi selama 1 detik
+        if (connectedDevices.length > 0) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // Frekuensi 440 Hz
+            oscillator.connect(audioContext.destination);
+            oscillator.start();
+            setTimeout(() => {
+                oscillator.stop();
+            }, 1000); // Bunyi selama 1 detik
+        } else {
+            alert('Tidak ada perangkat yang terhubung.');
+        }
     });
 
     // Membagikan perangkat
@@ -101,4 +111,56 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Web Share API is not supported by this browser.');
         }
     });
+
+    // Memindai barcode
+    scanBarcodeButton.addEventListener('click', function () {
+        scannerElement.style.display = 'block';
+        Quagga.init({
+            inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target: document.querySelector('#interactive')
+            },
+            decoder: {
+                readers: ["code_128_reader", "qr_code_reader"]
+            }
+        }, function (err) {
+            if (err) {
+                console.error('Error initializing Quagga:', err);
+                return;
+            }
+            Quagga.start();
+        });
+
+        Quagga.onDetected(function (result) {
+            const code = result.codeResult.code;
+            const device = JSON.parse(code); // Mengubah QR code menjadi objek perangkat
+            connectedDevices.push(device);
+            renderConnectedDevices();
+            scannerElement.style.display = 'none';
+            Quagga.stop();
+        });
+    });
+
+    // Menghentikan scan
+    stopScanButton.addEventListener('click', function () {
+        scannerElement.style.display = 'none';
+        Quagga.stop();
+    });
+
+    // Menampilkan daftar perangkat yang terhubung
+    function renderConnectedDevices() {
+        connectedDevicesElement.innerHTML = '';
+        connectedDevices.forEach((device, index) => {
+            const deviceElement = document.createElement('div');
+            deviceElement.className = 'connected-device';
+            deviceElement.innerHTML = `
+                <h3>${device.name}</h3>
+                <p>Baterai: ${device.battery}</p>
+                <p>Lokasi: ${device.location ? `${device.location.lat}, ${device.location.lng}` : 'Tidak tersedia'}</p>
+                <button onclick="playSound()">Bunyikan</button>
+            `;
+            connectedDevicesElement.appendChild(deviceElement);
+        });
+    }
 });
