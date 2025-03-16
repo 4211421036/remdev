@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function () {
         qrCode: null
     };
 
-    let connectedDevices = []; // Daftar perangkat yang terhubung
+    let connectedDevices = JSON.parse(localStorage.getItem('connectedDevices')) || [];
 
     // Meminta izin lokasi
     if (navigator.geolocation) {
@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }, function (err) {
             if (err) {
                 console.error('Error initializing Quagga:', err);
+                alert('Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.');
                 return;
             }
             Quagga.start();
@@ -140,11 +141,14 @@ document.addEventListener('DOMContentLoaded', function () {
             try {
                 const device = JSON.parse(code); // Mengubah QR code menjadi objek perangkat
                 connectedDevices.push(device);
+                localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
                 renderConnectedDevices();
                 scannerElement.style.display = 'none';
                 Quagga.stop();
+                alert(`Perangkat "${device.name}" berhasil ditambahkan!`);
             } catch (error) {
                 console.error('Error parsing QR code:', error);
+                alert('QR code tidak valid. Pastikan QR code berisi informasi perangkat yang benar.');
             }
         });
     });
@@ -170,4 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
             connectedDevicesElement.appendChild(deviceElement);
         });
     }
+
+    // Render perangkat yang terhubung saat pertama kali dimuat
+    renderConnectedDevices();
 });
