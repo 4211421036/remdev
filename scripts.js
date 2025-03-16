@@ -13,18 +13,16 @@ document.addEventListener('DOMContentLoaded', function () {
         name: 'Perangkat Saya',
         battery: null,
         location: null,
-        id: generateUniqueId() // Menambahkan ID unik untuk perangkat
+        id: generateUniqueId()
     };
 
     let connectedDevices = JSON.parse(localStorage.getItem('connectedDevices')) || [];
     let map = null;
 
-    // Fungsi untuk menghasilkan ID unik
     function generateUniqueId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     }
 
-    // Meminta izin lokasi
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
@@ -45,13 +43,10 @@ document.addEventListener('DOMContentLoaded', function () {
         alert('Browser Anda tidak mendukung fitur lokasi.');
     }
 
-    // Mendapatkan status baterai
     if ('getBattery' in navigator) {
         navigator.getBattery().then((battery) => {
             deviceData.battery = `${Math.round(battery.level * 100)}%`;
             updateDeviceInfo();
-            
-            // Tambahkan event listener untuk pembaruan baterai
             battery.addEventListener('levelchange', () => {
                 deviceData.battery = `${Math.round(battery.level * 100)}%`;
                 updateDeviceInfo();
@@ -63,26 +58,17 @@ document.addEventListener('DOMContentLoaded', function () {
         updateDeviceInfo();
     }
 
-    // Inisialisasi peta
     function initMap() {
         if (!deviceData.location) return;
-        
-        if (map) {
-            map.remove();
-        }
-        
+        if (map) map.remove();
         map = L.map(mapElement).setView([deviceData.location.lat, deviceData.location.lng], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
-        
-        // Tambahkan marker untuk perangkat saat ini
         L.marker([deviceData.location.lat, deviceData.location.lng])
             .addTo(map)
             .bindPopup(`${deviceData.name} (Perangkat Ini)`)
             .openPopup();
-        
-        // Tambahkan marker untuk perangkat terhubung
         connectedDevices.forEach(device => {
             if (device.location) {
                 L.marker([device.location.lat, device.location.lng])
@@ -92,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Membuat QR Code
     function generateQRCode(data) {
         qrCodeElement.innerHTML = '';
         new QRCode(qrCodeElement, {
@@ -102,7 +87,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Memperbarui informasi perangkat
     function updateDeviceInfo() {
         deviceInfo.innerHTML = `
             <h3>${deviceData.name}</h3>
@@ -113,30 +97,20 @@ document.addEventListener('DOMContentLoaded', function () {
         generateQRCode(deviceData);
     }
 
-    // Membunyikan perangkat yang terhubung
     function playSound(deviceId = null) {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
-        
         oscillator.type = 'square';
         oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
-        
-        // Untuk efek nada yang lebih baik
         oscillator.start();
-        
-        // Buat suara dengan pola beep-beep
         let counter = 0;
         const beepInterval = setInterval(() => {
-            if (counter % 2 === 0) {
-                gainNode.gain.value = 0.5;
-            } else {
-                gainNode.gain.value = 0;
-            }
+            if (counter % 2 === 0) gainNode.gain.value = 0.5;
+            else gainNode.gain.value = 0;
             counter++;
-            
             if (counter >= 10) {
                 clearInterval(beepInterval);
                 oscillator.stop();
@@ -144,10 +118,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 300);
     }
 
-    // Fungsi untuk membunyikan perangkat tertentu
     playSoundButton.addEventListener('click', function() {
         if (connectedDevices.length > 0) {
-            // Jika ada perangkat terhubung, tampilkan dialog untuk memilih perangkat
             const deviceSelection = confirm('Bunyikan semua perangkat terhubung?');
             if (deviceSelection) {
                 playSound();
@@ -158,7 +130,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Membagikan perangkat
     shareDeviceButton.addEventListener('click', function () {
         if (navigator.share) {
             navigator.share({
@@ -176,24 +147,16 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Memindai barcode
     scanBarcodeButton.addEventListener('click', function () {
-        // Pastikan elemen scanner terlihat
         scannerElement.style.display = 'block';
-        
-        // Bersihkan elemen pemindai sebelum memulai
         const interactiveElement = document.getElementById('interactive');
         while (interactiveElement.firstChild) {
             interactiveElement.removeChild(interactiveElement.firstChild);
         }
-        
-        // Tambahkan video element secara manual untuk memastikan pemindaian bekerja
         const videoElement = document.createElement('video');
         videoElement.style.width = '100%';
         videoElement.style.height = 'auto';
         interactiveElement.appendChild(videoElement);
-        
-        // Tambahkan overlay untuk mempermudah pengguna mengarahkan kamera
         const overlayElement = document.createElement('div');
         overlayElement.style.position = 'absolute';
         overlayElement.style.top = '0';
@@ -204,8 +167,6 @@ document.addEventListener('DOMContentLoaded', function () {
         overlayElement.style.boxSizing = 'border-box';
         overlayElement.style.pointerEvents = 'none';
         interactiveElement.appendChild(overlayElement);
-        
-        // Aktifkan akses kamera terlebih dahulu, lalu inisialisasi Quagga
         navigator.mediaDevices.getUserMedia({ 
             video: { 
                 facingMode: "environment",
@@ -214,9 +175,11 @@ document.addEventListener('DOMContentLoaded', function () {
             } 
         }).then(function(stream) {
             videoElement.srcObject = stream;
-            videoElement.play();
-            
-            // Inisialisasi Quagga dengan konfigurasi yang lebih baik untuk QR code
+            videoElement.play().then(() => {
+                console.log('Video is playing');
+            }).catch((error) => {
+                console.error('Error playing video:', error);
+            });
             Quagga.init({
                 inputStream: {
                     name: "Live",
@@ -235,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 numOfWorkers: 4,
                 frequency: 10,
                 decoder: {
-                    readers: ["qr_code_reader"] // Fokus hanya pada QR code reader
+                    readers: ["qr_code_reader"]
                 },
                 locate: true
             }, function (err) {
@@ -248,8 +211,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 console.log('Quagga initialized successfully');
                 Quagga.start();
-                
-                // Tambahkan indikator visual ketika sedang memindai
                 const status = document.createElement('div');
                 status.textContent = 'Memindai...';
                 status.style.position = 'absolute';
@@ -267,25 +228,21 @@ document.addEventListener('DOMContentLoaded', function () {
             alert('Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.');
             scannerElement.style.display = 'none';
         });
-        
-        // Gunakan jsQR sebagai backup jika Quagga tidak dapat mendeteksi QR code
         let scanning = true;
-        
         function scanQRCode() {
             if (!scanning) return;
-            
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
             const videoWidth = videoElement.videoWidth;
             const videoHeight = videoElement.videoHeight;
-            
+            if (videoWidth === 0 || videoHeight === 0) {
+                requestAnimationFrame(scanQRCode);
+                return;
+            }
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
             canvas.width = videoWidth;
             canvas.height = videoHeight;
-            
             context.drawImage(videoElement, 0, 0, videoWidth, videoHeight);
             const imageData = context.getImageData(0, 0, videoWidth, videoHeight);
-            
-            // Gunakan library jsQR jika tersedia (anda perlu menambahkannya)
             if (window.jsQR) {
                 const code = jsQR(imageData.data, imageData.width, imageData.height);
                 if (code) {
@@ -298,16 +255,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         console.error('Error parsing QR code:', error);
                     }
                 } else {
-                    // Lanjutkan pemindaian
                     requestAnimationFrame(scanQRCode);
                 }
             } else {
-                // Jika jsQR tidak tersedia, gunakan Quagga saja
                 requestAnimationFrame(scanQRCode);
             }
         }
-        
-        // Berhenti memindai
         function stopScanner() {
             scanning = false;
             Quagga.stop();
@@ -316,11 +269,8 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             scannerElement.style.display = 'none';
         }
-        
-        // Event listener untuk deteksi barcode dengan Quagga
         Quagga.onDetected(function (result) {
             console.log('QR code detected with Quagga:', result.codeResult.code);
-            
             try {
                 const scannedDeviceData = JSON.parse(result.codeResult.code);
                 processScannedDevice(scannedDeviceData);
@@ -330,63 +280,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('QR code tidak valid. Pastikan QR code berisi informasi perangkat yang benar.');
             }
         });
-        
-        // Proses data perangkat yang dipindai
-        function processScannedDevice(scannedDeviceData) {
-            // Periksa apakah data valid
-            if (!scannedDeviceData || !scannedDeviceData.id) {
-                alert('Data QR code tidak valid. QR code harus berisi informasi perangkat.');
-                return;
-            }
-            
-            // Periksa apakah perangkat sudah ada dalam daftar
-            const existingDeviceIndex = connectedDevices.findIndex(device => device.id === scannedDeviceData.id);
-            
-            if (existingDeviceIndex === -1) {
-                // Tambahkan perangkat baru ke daftar
-                connectedDevices.push(scannedDeviceData);
-                localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
-                
-                alert(`Perangkat "${scannedDeviceData.name}" berhasil ditambahkan!`);
-            } else {
-                // Perbarui informasi perangkat yang sudah ada
-                connectedDevices[existingDeviceIndex] = scannedDeviceData;
-                localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
-                
-                alert(`Informasi perangkat "${scannedDeviceData.name}" berhasil diperbarui!`);
-            }
-            
-            // Perbarui UI
-            renderConnectedDevices();
-            initMap();
-        }
-        
-        // Mulai pemindaian backup jika menggunakan jsQR
         if (window.jsQR) {
             scanQRCode();
         }
-        
-        // Menghentikan scan ketika tombol stop ditekan
         stopScanButton.addEventListener('click', function() {
             stopScanner();
         });
     });
 
-    // Menghentikan scan
     stopScanButton.addEventListener('click', function () {
         scannerElement.style.display = 'none';
         Quagga.stop();
     });
 
-    // Menampilkan daftar perangkat yang terhubung
     function renderConnectedDevices() {
         connectedDevicesElement.innerHTML = '<h2>Perangkat Terhubung</h2>';
-        
         if (connectedDevices.length === 0) {
             connectedDevicesElement.innerHTML += '<p>Tidak ada perangkat terhubung. Pindai QR code untuk menambahkan perangkat.</p>';
             return;
         }
-        
         connectedDevices.forEach((device, index) => {
             const deviceElement = document.createElement('div');
             deviceElement.className = 'connected-device';
@@ -400,8 +312,6 @@ document.addEventListener('DOMContentLoaded', function () {
             `;
             connectedDevicesElement.appendChild(deviceElement);
         });
-        
-        // Tambahkan event listener untuk tombol bunyikan
         document.querySelectorAll('.sound-button').forEach(button => {
             button.addEventListener('click', function() {
                 const deviceId = this.getAttribute('data-device-id');
@@ -409,17 +319,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 alert('Membunyikan perangkat...');
             });
         });
-        
-        // Tambahkan event listener untuk tombol temukan
         document.querySelectorAll('.locate-button').forEach(button => {
             button.addEventListener('click', function() {
                 const deviceId = this.getAttribute('data-device-id');
                 const device = connectedDevices.find(d => d.id === deviceId);
-                
                 if (device && device.location) {
                     if (map) {
                         map.setView([device.location.lat, device.location.lng], 15);
-                        // Tambahkan popup untuk menunjukkan lokasi perangkat
                         L.popup()
                             .setLatLng([device.location.lat, device.location.lng])
                             .setContent(`<b>${device.name}</b><br>Lokasi terakhir`)
@@ -430,13 +336,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
         });
-        
-        // Tambahkan event listener untuk tombol hapus
         document.querySelectorAll('.remove-button').forEach(button => {
             button.addEventListener('click', function() {
                 const deviceId = this.getAttribute('data-device-id');
                 const deviceIndex = connectedDevices.findIndex(d => d.id === deviceId);
-                
                 if (deviceIndex !== -1) {
                     const deviceName = connectedDevices[deviceIndex].name;
                     if (confirm(`Hapus perangkat "${deviceName}"?`)) {
@@ -451,35 +354,24 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Periksa parameter URL untuk perangkat yang dibagikan
     function checkSharedDevice() {
         const urlParams = new URLSearchParams(window.location.search);
         const sharedDeviceParam = urlParams.get('device');
-        
         if (sharedDeviceParam) {
             try {
                 const sharedDevice = JSON.parse(decodeURIComponent(sharedDeviceParam));
-                
-                // Periksa apakah perangkat sudah ada dalam daftar
                 const existingDeviceIndex = connectedDevices.findIndex(device => device.id === sharedDevice.id);
-                
                 if (existingDeviceIndex === -1) {
-                    // Tambahkan perangkat baru ke daftar
                     connectedDevices.push(sharedDevice);
                     localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
                     alert(`Perangkat "${sharedDevice.name}" berhasil ditambahkan dari tautan yang dibagikan!`);
                 } else {
-                    // Perbarui informasi perangkat yang sudah ada
                     connectedDevices[existingDeviceIndex] = sharedDevice;
                     localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
                     alert(`Informasi perangkat "${sharedDevice.name}" berhasil diperbarui dari tautan yang dibagikan!`);
                 }
-                
-                // Perbarui UI
                 renderConnectedDevices();
                 initMap();
-                
-                // Hapus parameter URL untuk menghindari penambahan berulang
                 window.history.replaceState({}, document.title, window.location.pathname);
             } catch (error) {
                 console.error('Error parsing shared device data:', error);
@@ -488,8 +380,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Inisialisasi aplikasi
     updateDeviceInfo();
     renderConnectedDevices();
-    checkSharedDevice(); // Periksa parameter URL untuk perangkat yang dibagikan
+    checkSharedDevice();
 });
