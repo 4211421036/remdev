@@ -177,238 +177,198 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Memindai barcode
-    // Fungsi pemindaian kode QR yang diperbaiki
-scanBarcodeButton.addEventListener('click', function () {
-    // Pastikan elemen scanner terlihat
-    scannerElement.style.display = 'block';
-    
-    // Bersihkan elemen pemindai sebelum memulai
-    const interactiveElement = document.getElementById('interactive');
-    while (interactiveElement.firstChild) {
-        interactiveElement.removeChild(interactiveElement.firstChild);
-    }
-    
-    // Tambahkan video element secara manual untuk memastikan pemindaian bekerja
-    const videoElement = document.createElement('video');
-    videoElement.style.width = '100%';
-    videoElement.style.height = 'auto';
-    interactiveElement.appendChild(videoElement);
-    
-    // Tambahkan overlay untuk mempermudah pengguna mengarahkan kamera
-    const overlayElement = document.createElement('div');
-    overlayElement.style.position = 'absolute';
-    overlayElement.style.top = '0';
-    overlayElement.style.left = '0';
-    overlayElement.style.width = '100%';
-    overlayElement.style.height = '100%';
-    overlayElement.style.border = '2px solid #f00';
-    overlayElement.style.boxSizing = 'border-box';
-    overlayElement.style.pointerEvents = 'none';
-    interactiveElement.appendChild(overlayElement);
-    
-    // Aktifkan akses kamera terlebih dahulu, lalu inisialisasi Quagga
-    navigator.mediaDevices.getUserMedia({ 
-        video: { 
-            facingMode: "environment",
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-        } 
-    }).then(function(stream) {
-        videoElement.srcObject = stream;
-        videoElement.play();
+    scanBarcodeButton.addEventListener('click', function () {
+        // Pastikan elemen scanner terlihat
+        scannerElement.style.display = 'block';
         
-        // Inisialisasi Quagga dengan konfigurasi yang lebih baik untuk QR code
-        Quagga.init({
-            inputStream: {
-                name: "Live",
-                type: "LiveStream",
-                target: interactiveElement,
-                constraints: {
-                    width: 1280,
-                    height: 720,
-                    facingMode: "environment"
-                }
-            },
-            locator: {
-                patchSize: "medium",
-                halfSample: true
-            },
-            numOfWorkers: 4,
-            frequency: 10,
-            decoder: {
-                readers: ["qr_code_reader"] // Fokus hanya pada QR code reader
-            },
-            locate: true
-        }, function (err) {
-            if (err) {
-                console.error('Error initializing Quagga:', err);
-                alert('Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.');
-                scannerElement.style.display = 'none';
-                videoElement.srcObject.getTracks().forEach(track => track.stop());
-                return;
-            }
-            console.log('Quagga initialized successfully');
-            Quagga.start();
+        // Bersihkan elemen pemindai sebelum memulai
+        const interactiveElement = document.getElementById('interactive');
+        while (interactiveElement.firstChild) {
+            interactiveElement.removeChild(interactiveElement.firstChild);
+        }
+        
+        // Tambahkan video element secara manual untuk memastikan pemindaian bekerja
+        const videoElement = document.createElement('video');
+        videoElement.style.width = '100%';
+        videoElement.style.height = 'auto';
+        interactiveElement.appendChild(videoElement);
+        
+        // Tambahkan overlay untuk mempermudah pengguna mengarahkan kamera
+        const overlayElement = document.createElement('div');
+        overlayElement.style.position = 'absolute';
+        overlayElement.style.top = '0';
+        overlayElement.style.left = '0';
+        overlayElement.style.width = '100%';
+        overlayElement.style.height = '100%';
+        overlayElement.style.border = '2px solid #f00';
+        overlayElement.style.boxSizing = 'border-box';
+        overlayElement.style.pointerEvents = 'none';
+        interactiveElement.appendChild(overlayElement);
+        
+        // Aktifkan akses kamera terlebih dahulu, lalu inisialisasi Quagga
+        navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: "environment",
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            } 
+        }).then(function(stream) {
+            videoElement.srcObject = stream;
+            videoElement.play();
             
-            // Tambahkan indikator visual ketika sedang memindai
-            const status = document.createElement('div');
-            status.textContent = 'Memindai...';
-            status.style.position = 'absolute';
-            status.style.bottom = '10px';
-            status.style.left = '0';
-            status.style.right = '0';
-            status.style.textAlign = 'center';
-            status.style.color = 'white';
-            status.style.backgroundColor = 'rgba(0,0,0,0.5)';
-            status.style.padding = '5px';
-            interactiveElement.appendChild(status);
+            // Inisialisasi Quagga dengan konfigurasi yang lebih baik untuk QR code
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: interactiveElement,
+                    constraints: {
+                        width: 1280,
+                        height: 720,
+                        facingMode: "environment"
+                    }
+                },
+                locator: {
+                    patchSize: "medium",
+                    halfSample: true
+                },
+                numOfWorkers: 4,
+                frequency: 10,
+                decoder: {
+                    readers: ["qr_code_reader"] // Fokus hanya pada QR code reader
+                },
+                locate: true
+            }, function (err) {
+                if (err) {
+                    console.error('Error initializing Quagga:', err);
+                    alert('Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.');
+                    scannerElement.style.display = 'none';
+                    videoElement.srcObject.getTracks().forEach(track => track.stop());
+                    return;
+                }
+                console.log('Quagga initialized successfully');
+                Quagga.start();
+                
+                // Tambahkan indikator visual ketika sedang memindai
+                const status = document.createElement('div');
+                status.textContent = 'Memindai...';
+                status.style.position = 'absolute';
+                status.style.bottom = '10px';
+                status.style.left = '0';
+                status.style.right = '0';
+                status.style.textAlign = 'center';
+                status.style.color = 'white';
+                status.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                status.style.padding = '5px';
+                interactiveElement.appendChild(status);
+            });
+        }).catch(function(err) {
+            console.error('Error accessing camera:', err);
+            alert('Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.');
+            scannerElement.style.display = 'none';
         });
-    }).catch(function(err) {
-        console.error('Error accessing camera:', err);
-        alert('Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.');
-        scannerElement.style.display = 'none';
-    });
-    
-    // Gunakan jsQR sebagai backup jika Quagga tidak dapat mendeteksi QR code
-    let scanning = true;
-    
-    function scanQRCode() {
-        if (!scanning) return;
         
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        const videoWidth = videoElement.videoWidth;
-        const videoHeight = videoElement.videoHeight;
+        // Gunakan jsQR sebagai backup jika Quagga tidak dapat mendeteksi QR code
+        let scanning = true;
         
-        canvas.width = videoWidth;
-        canvas.height = videoHeight;
-        
-        context.drawImage(videoElement, 0, 0, videoWidth, videoHeight);
-        const imageData = context.getImageData(0, 0, videoWidth, videoHeight);
-        
-        // Gunakan library jsQR jika tersedia (anda perlu menambahkannya)
-        if (window.jsQR) {
-            const code = jsQR(imageData.data, imageData.width, imageData.height);
-            if (code) {
-                try {
-                    console.log('QR code detected with jsQR:', code.data);
-                    const scannedDeviceData = JSON.parse(code.data);
-                    processScannedDevice(scannedDeviceData);
-                    stopScanner();
-                } catch (error) {
-                    console.error('Error parsing QR code:', error);
+        function scanQRCode() {
+            if (!scanning) return;
+            
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const videoWidth = videoElement.videoWidth;
+            const videoHeight = videoElement.videoHeight;
+            
+            canvas.width = videoWidth;
+            canvas.height = videoHeight;
+            
+            context.drawImage(videoElement, 0, 0, videoWidth, videoHeight);
+            const imageData = context.getImageData(0, 0, videoWidth, videoHeight);
+            
+            // Gunakan library jsQR jika tersedia (anda perlu menambahkannya)
+            if (window.jsQR) {
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+                if (code) {
+                    try {
+                        console.log('QR code detected with jsQR:', code.data);
+                        const scannedDeviceData = JSON.parse(code.data);
+                        processScannedDevice(scannedDeviceData);
+                        stopScanner();
+                    } catch (error) {
+                        console.error('Error parsing QR code:', error);
+                    }
+                } else {
+                    // Lanjutkan pemindaian
+                    requestAnimationFrame(scanQRCode);
                 }
             } else {
-                // Lanjutkan pemindaian
+                // Jika jsQR tidak tersedia, gunakan Quagga saja
                 requestAnimationFrame(scanQRCode);
             }
-        } else {
-            // Jika jsQR tidak tersedia, gunakan Quagga saja
-            requestAnimationFrame(scanQRCode);
-        }
-    }
-    
-    // Berhenti memindai
-    function stopScanner() {
-        scanning = false;
-        Quagga.stop();
-        if (videoElement.srcObject) {
-            videoElement.srcObject.getTracks().forEach(track => track.stop());
-        }
-        scannerElement.style.display = 'none';
-    }
-    
-    // Event listener untuk deteksi barcode dengan Quagga
-    Quagga.onDetected(function (result) {
-        console.log('QR code detected with Quagga:', result.codeResult.code);
-        
-        try {
-            const scannedDeviceData = JSON.parse(result.codeResult.code);
-            processScannedDevice(scannedDeviceData);
-            stopScanner();
-        } catch (error) {
-            console.error('Error parsing QR code:', error);
-            alert('QR code tidak valid. Pastikan QR code berisi informasi perangkat yang benar.');
-        }
-    });
-    
-    // Proses data perangkat yang dipindai
-    function processScannedDevice(scannedDeviceData) {
-        // Periksa apakah data valid
-        if (!scannedDeviceData || !scannedDeviceData.id) {
-            alert('Data QR code tidak valid. QR code harus berisi informasi perangkat.');
-            return;
         }
         
-        // Periksa apakah perangkat sudah ada dalam daftar
-        const existingDeviceIndex = connectedDevices.findIndex(device => device.id === scannedDeviceData.id);
-        
-        if (existingDeviceIndex === -1) {
-            // Tambahkan perangkat baru ke daftar
-            connectedDevices.push(scannedDeviceData);
-            localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
-            
-            alert(`Perangkat "${scannedDeviceData.name}" berhasil ditambahkan!`);
-        } else {
-            // Perbarui informasi perangkat yang sudah ada
-            connectedDevices[existingDeviceIndex] = scannedDeviceData;
-            localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
-            
-            alert(`Informasi perangkat "${scannedDeviceData.name}" berhasil diperbarui!`);
+        // Berhenti memindai
+        function stopScanner() {
+            scanning = false;
+            Quagga.stop();
+            if (videoElement.srcObject) {
+                videoElement.srcObject.getTracks().forEach(track => track.stop());
+            }
+            scannerElement.style.display = 'none';
         }
         
-        // Perbarui UI
-        renderConnectedDevices();
-        initMap();
-    }
-    
-    // Mulai pemindaian backup jika menggunakan jsQR
-    if (window.jsQR) {
-        scanQRCode();
-    }
-    
-    // Menghentikan scan ketika tombol stop ditekan
-    stopScanButton.addEventListener('click', function() {
-        stopScanner();
-    });
-});
-        // Event listener untuk deteksi barcode
+        // Event listener untuk deteksi barcode dengan Quagga
         Quagga.onDetected(function (result) {
-            console.log('Barcode detected:', result.codeResult.code);
+            console.log('QR code detected with Quagga:', result.codeResult.code);
             
             try {
                 const scannedDeviceData = JSON.parse(result.codeResult.code);
-                console.log('Parsed device data:', scannedDeviceData);
-                
-                // Periksa apakah perangkat sudah ada dalam daftar
-                const existingDeviceIndex = connectedDevices.findIndex(device => device.id === scannedDeviceData.id);
-                
-                if (existingDeviceIndex === -1) {
-                    // Tambahkan perangkat baru ke daftar
-                    connectedDevices.push(scannedDeviceData);
-                    localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
-                    
-                    alert(`Perangkat "${scannedDeviceData.name}" berhasil ditambahkan!`);
-                } else {
-                    // Perbarui informasi perangkat yang sudah ada
-                    connectedDevices[existingDeviceIndex] = scannedDeviceData;
-                    localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
-                    
-                    alert(`Informasi perangkat "${scannedDeviceData.name}" berhasil diperbarui!`);
-                }
-                
-                // Hentikan pemindaian dan tutup scanner
-                Quagga.stop();
-                scannerElement.style.display = 'none';
-                
-                // Perbarui UI
-                renderConnectedDevices();
-                initMap();
-                
+                processScannedDevice(scannedDeviceData);
+                stopScanner();
             } catch (error) {
                 console.error('Error parsing QR code:', error);
                 alert('QR code tidak valid. Pastikan QR code berisi informasi perangkat yang benar.');
             }
+        });
+        
+        // Proses data perangkat yang dipindai
+        function processScannedDevice(scannedDeviceData) {
+            // Periksa apakah data valid
+            if (!scannedDeviceData || !scannedDeviceData.id) {
+                alert('Data QR code tidak valid. QR code harus berisi informasi perangkat.');
+                return;
+            }
+            
+            // Periksa apakah perangkat sudah ada dalam daftar
+            const existingDeviceIndex = connectedDevices.findIndex(device => device.id === scannedDeviceData.id);
+            
+            if (existingDeviceIndex === -1) {
+                // Tambahkan perangkat baru ke daftar
+                connectedDevices.push(scannedDeviceData);
+                localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
+                
+                alert(`Perangkat "${scannedDeviceData.name}" berhasil ditambahkan!`);
+            } else {
+                // Perbarui informasi perangkat yang sudah ada
+                connectedDevices[existingDeviceIndex] = scannedDeviceData;
+                localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
+                
+                alert(`Informasi perangkat "${scannedDeviceData.name}" berhasil diperbarui!`);
+            }
+            
+            // Perbarui UI
+            renderConnectedDevices();
+            initMap();
+        }
+        
+        // Mulai pemindaian backup jika menggunakan jsQR
+        if (window.jsQR) {
+            scanQRCode();
+        }
+        
+        // Menghentikan scan ketika tombol stop ditekan
+        stopScanButton.addEventListener('click', function() {
+            stopScanner();
         });
     });
 
