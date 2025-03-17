@@ -9,24 +9,30 @@
 <body>
     <div class="container">
         <h1>Lacak Perangkat</h1>
+
+        <!-- Informasi Perangkat Utama -->
         <div id="device-info">
-            <!-- Informasi perangkat akan muncul di sini -->
+            <h2>Perangkat Utama</h2>
+            <p>Nama: <span id="device-name">Perangkat Saya</span></p>
+            <p>Baterai: <span id="device-battery">Tidak tersedia</span></p>
+            <p>Lokasi: <span id="device-location">Tidak tersedia</span></p>
+            <p>ID Perangkat: <span id="device-id">Loading...</span></p>
         </div>
-        <div id="qr-code"></div>
-        <button id="share-device">Bagikan Perangkat</button>
-        <button id="play-sound">Bunyikan Perangkat</button>
-        <input type="text" id="device-id-input" placeholder="Masukkan ID Perangkat">
-        <button id="add-device">Tambahkan Perangkat</button>
+
+        <!-- Input untuk Menambahkan Perangkat -->
+        <div class="add-device-section">
+            <h2>Tambahkan Perangkat</h2>
+            <input type="text" id="device-id-input" placeholder="Masukkan ID Perangkat">
+            <button id="add-device">Tambahkan Perangkat</button>
+        </div>
+
+        <!-- Daftar Perangkat Terhubung -->
         <div id="connected-devices">
-            <!-- Daftar perangkat yang terhubung akan muncul di sini -->
+            <h2>Perangkat Terhubung</h2>
+            <p>Tidak ada perangkat terhubung.</p>
         </div>
-        <div id="map" style="height: 300px; margin-top: 20px;"></div>
     </div>
 
-    <!-- Library untuk QR Code -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <!-- Library untuk OpenStreetMap -->
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="scripts.js"></script>
 </body>
 </html>
