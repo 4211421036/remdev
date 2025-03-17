@@ -8,12 +8,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const connectedDevicesElement = document.getElementById('connected-devices');
     const mapElement = document.getElementById('map');
 
+    // Ambil ID perangkat dari localStorage atau buat baru jika belum ada
     let deviceData = {
         name: 'Perangkat Saya',
         battery: null,
         location: null,
-        id: generateUniqueId()
+        id: localStorage.getItem('deviceId') || generateUniqueId()
     };
+    localStorage.setItem('deviceId', deviceData.id); // Simpan ID perangkat ke localStorage
 
     let connectedDevices = JSON.parse(localStorage.getItem('connectedDevices')) || [];
     let map = null;
@@ -22,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     }
 
+    // Ambil lokasi perangkat
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             (position) => {
@@ -42,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
         alert('Browser Anda tidak mendukung fitur lokasi.');
     }
 
+    // Ambil informasi baterai perangkat
     if ('getBattery' in navigator) {
         navigator.getBattery().then((battery) => {
             deviceData.battery = `${Math.round(battery.level * 100)}%`;
@@ -57,6 +61,7 @@ document.addEventListener('DOMContentLoaded', function () {
         updateDeviceInfo();
     }
 
+    // Inisialisasi peta
     function initMap() {
         if (!deviceData.location) return;
         if (map) map.remove();
@@ -77,6 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Generate QR Code
     function generateQRCode(data) {
         qrCodeElement.innerHTML = '';
         new QRCode(qrCodeElement, {
@@ -86,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Update informasi perangkat
     function updateDeviceInfo() {
         deviceInfo.innerHTML = `
             <h3>${deviceData.name}</h3>
@@ -96,6 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
         generateQRCode(deviceData);
     }
 
+    // Fungsi untuk membunyikan perangkat
     function playSound(deviceId = null) {
         if (deviceId) {
             // Kirim perintah ke perangkat yang ditambahkan untuk memainkan suara
@@ -124,6 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Event listener untuk tombol bunyikan perangkat
     playSoundButton.addEventListener('click', function() {
         if (connectedDevices.length > 0) {
             const deviceSelection = confirm('Bunyikan semua perangkat terhubung?');
@@ -138,6 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // Event listener untuk tombol bagikan perangkat
     shareDeviceButton.addEventListener('click', function () {
         if (navigator.share) {
             navigator.share({
@@ -155,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // Event listener untuk tombol tambahkan perangkat
     addDeviceButton.addEventListener('click', function () {
         const deviceId = deviceIdInput.value.trim();
         if (deviceId) {
@@ -174,6 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // Render daftar perangkat yang terhubung
     function renderConnectedDevices() {
         connectedDevicesElement.innerHTML = '<h2>Perangkat Terhubung</h2>';
         if (connectedDevices.length === 0) {
@@ -235,6 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Cek perangkat yang dibagikan melalui URL
     function checkSharedDevice() {
         const urlParams = new URLSearchParams(window.location.search);
         const sharedDeviceParam = urlParams.get('device');
@@ -261,6 +274,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Inisialisasi
     updateDeviceInfo();
     renderConnectedDevices();
     checkSharedDevice();
