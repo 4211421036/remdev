@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     const botToken = '7613841593:AAH-uvuKnVfb9Pl1Ah02g6rRYA_ebAQZr_o'; // Ganti dengan token bot Telegram Anda
-    const chatId = '-4684152339'; // Ganti dengan chat ID Anda di Telegram
+    const chatId = '-1002670609388'; // Ganti dengan chat ID Anda di Telegram
     const deviceIdInput = document.getElementById('device-id-input'); // Input field untuk ID perangkat
     const addDeviceButton = document.getElementById('add-device'); // Tombol tambahkan perangkat
     const connectedDevicesElement = document.getElementById('connected-devices'); // Elemen untuk menampilkan perangkat terhubung
