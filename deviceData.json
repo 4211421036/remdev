@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "name": "Perangkat Saya",
+    "battery": "80%",
+    "location": {
+      "lat": -6.995968,
+      "lng": 110.3888384
+    },
+    "id": "m8cc91ge5mt8y45zh2b"
+  }
+]
