@@ -22,10 +22,10 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: npm install node-fetch
+        run: npm install
 
       - name: Fetch data from Telegram bot
-        run: node fetchData.js
+        run: npm start
 
       - name: Commit and push changes
         run: |
