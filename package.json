@@ -1,6 +1,7 @@
 {
   "name": "remdev",
   "version": "1.0.0",
+  "author": "GALIH RIDHO UTOMO",
   "description": "Fetch device data from Telegram bot and save to JSON",
   "main": "fetchdata.js",
   "scripts": {
