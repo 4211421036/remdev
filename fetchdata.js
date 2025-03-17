@@ -8,8 +8,8 @@ const chatId = '-4684152339'; // Ganti dengan chat ID Anda di Telegram
 // File JSON untuk menyimpan data
 const dataFilePath = 'deviceData.json';
 
-// Fungsi untuk mengambil data dari bot Telegram
-async function fetchDataFromBot() {
+// Fungsi untuk mengambil semua pesan dari bot Telegram
+async function fetchAllMessages() {
     try {
         const url = `https://api.telegram.org/bot${botToken}/getUpdates`;
         const response = await fetch(url);
@@ -30,7 +30,7 @@ async function fetchDataFromBot() {
 
             return deviceData;
         } else {
-            console.log('No new messages from bot.');
+            console.log('No messages from bot.');
             return [];
         }
     } catch (error) {
@@ -40,14 +40,32 @@ async function fetchDataFromBot() {
 }
 
 // Fungsi untuk menyimpan data ke file JSON
-function saveDataToFile(data) {
-    fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
+function saveDataToFile(newData) {
+    let existingData = [];
+    if (fs.existsSync(dataFilePath)) {
+        existingData = JSON.parse(fs.readFileSync(dataFilePath, 'utf-8'));
+    }
+
+    // Gabungkan data baru dengan data yang sudah ada
+    newData.forEach(newDevice => {
+        const existingDeviceIndex = existingData.findIndex(device => device.id === newDevice.id);
+        if (existingDeviceIndex === -1) {
+            // Jika ID perangkat belum ada, tambahkan data baru
+            existingData.push(newDevice);
+        } else {
+            // Jika ID perangkat sudah ada, update data yang ada
+            existingData[existingDeviceIndex] = newDevice;
+        }
+    });
+
+    // Simpan data ke file JSON
+    fs.writeFileSync(dataFilePath, JSON.stringify(existingData, null, 2));
     console.log('Data saved to file:', dataFilePath);
 }
 
 // Fungsi utama
 async function main() {
-    const deviceData = await fetchDataFromBot(); // Ambil data dari bot Telegram
+    const deviceData = await fetchAllMessages(); // Ambil semua pesan dari bot Telegram
     saveDataToFile(deviceData); // Simpan data ke file JSON
 }
 
