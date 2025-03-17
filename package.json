@@ -1,0 +1,12 @@
+{
+  "name": "remdev",
+  "version": "1.0.0",
+  "description": "Fetch device data from Telegram bot and save to JSON",
+  "main": "fetchData.js",
+  "scripts": {
+    "start": "node fetchData.js"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  }
+}
