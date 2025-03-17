@@ -3,9 +3,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const qrCodeElement = document.getElementById('qr-code');
     const shareDeviceButton = document.getElementById('share-device');
     const playSoundButton = document.getElementById('play-sound');
-    const scanBarcodeButton = document.getElementById('scan-barcode');
-    const scannerElement = document.getElementById('scanner');
-    const stopScanButton = document.getElementById('stop-scan');
+    const addDeviceButton = document.getElementById('add-device');
+    const deviceIdInput = document.getElementById('device-id-input');
     const connectedDevicesElement = document.getElementById('connected-devices');
     const mapElement = document.getElementById('map');
 
@@ -147,156 +146,29 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    scanBarcodeButton.addEventListener('click', function () {
-        scannerElement.style.display = 'block';
-        const interactiveElement = document.getElementById('interactive');
-        while (interactiveElement.firstChild) {
-            interactiveElement.removeChild(interactiveElement.firstChild);
+    addDeviceButton.addEventListener('click', function () {
+        const deviceId = deviceIdInput.value.trim();
+        if (deviceId) {
+            const newDevice = {
+                id: deviceId,
+                name: `Perangkat ${deviceId}`,
+                battery: 'Tidak tersedia',
+                location: null
+            };
+            connectedDevices.push(newDevice);
+            localStorage.setItem('connectedDevices', JSON.stringify(connectedDevices));
+            renderConnectedDevices();
+            initMap();
+            alert(`Perangkat "${newDevice.name}" berhasil ditambahkan.`);
+        } else {
+            alert('Masukkan ID perangkat yang valid.');
         }
-        const videoElement = document.createElement('video');
-        videoElement.style.width = '100%';
-        videoElement.style.height = 'auto';
-        interactiveElement.appendChild(videoElement);
-        const overlayElement = document.createElement('div');
-        overlayElement.style.position = 'absolute';
-        overlayElement.style.top = '0';
-        overlayElement.style.left = '0';
-        overlayElement.style.width = '100%';
-        overlayElement.style.height = '100%';
-        overlayElement.style.border = '2px solid #f00';
-        overlayElement.style.boxSizing = 'border-box';
-        overlayElement.style.pointerEvents = 'none';
-        interactiveElement.appendChild(overlayElement);
-        navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                facingMode: "environment",
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            } 
-        }).then(function(stream) {
-            videoElement.srcObject = stream;
-            videoElement.play().then(() => {
-                console.log('Video is playing');
-            }).catch((error) => {
-                console.error('Error playing video:', error);
-            });
-            Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: interactiveElement,
-                    constraints: {
-                        width: 1280,
-                        height: 720,
-                        facingMode: "environment"
-                    }
-                },
-                locator: {
-                    patchSize: "medium",
-                    halfSample: true
-                },
-                numOfWorkers: 4,
-                frequency: 10,
-                decoder: {
-                    readers: ["qr_code_reader"]
-                },
-                locate: true
-            }, function (err) {
-                if (err) {
-                    console.error('Error initializing Quagga:', err);
-                    alert('Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.');
-                    scannerElement.style.display = 'none';
-                    videoElement.srcObject.getTracks().forEach(track => track.stop());
-                    return;
-                }
-                console.log('Quagga initialized successfully');
-                Quagga.start();
-                const status = document.createElement('div');
-                status.textContent = 'Memindai...';
-                status.style.position = 'absolute';
-                status.style.bottom = '10px';
-                status.style.left = '0';
-                status.style.right = '0';
-                status.style.textAlign = 'center';
-                status.style.color = 'white';
-                status.style.backgroundColor = 'rgba(0,0,0,0.5)';
-                status.style.padding = '5px';
-                interactiveElement.appendChild(status);
-            });
-        }).catch(function(err) {
-            console.error('Error accessing camera:', err);
-            alert('Tidak dapat mengakses kamera. Pastikan izin kamera diberikan.');
-            scannerElement.style.display = 'none';
-        });
-        let scanning = true;
-        function scanQRCode() {
-            if (!scanning) return;
-            const videoWidth = videoElement.videoWidth;
-            const videoHeight = videoElement.videoHeight;
-            if (videoWidth === 0 || videoHeight === 0) {
-                requestAnimationFrame(scanQRCode);
-                return;
-            }
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = videoWidth;
-            canvas.height = videoHeight;
-            context.drawImage(videoElement, 0, 0, videoWidth, videoHeight);
-            const imageData = context.getImageData(0, 0, videoWidth, videoHeight);
-            if (window.jsQR) {
-                const code = jsQR(imageData.data, imageData.width, imageData.height);
-                if (code) {
-                    try {
-                        console.log('QR code detected with jsQR:', code.data);
-                        const scannedDeviceData = JSON.parse(code.data);
-                        processScannedDevice(scannedDeviceData);
-                        stopScanner();
-                    } catch (error) {
-                        console.error('Error parsing QR code:', error);
-                    }
-                } else {
-                    requestAnimationFrame(scanQRCode);
-                }
-            } else {
-                requestAnimationFrame(scanQRCode);
-            }
-        }
-        function stopScanner() {
-            scanning = false;
-            Quagga.stop();
-            if (videoElement.srcObject) {
-                videoElement.srcObject.getTracks().forEach(track => track.stop());
-            }
-            scannerElement.style.display = 'none';
-        }
-        Quagga.onDetected(function (result) {
-            console.log('QR code detected with Quagga:', result.codeResult.code);
-            try {
-                const scannedDeviceData = JSON.parse(result.codeResult.code);
-                processScannedDevice(scannedDeviceData);
-                stopScanner();
-            } catch (error) {
-                console.error('Error parsing QR code:', error);
-                alert('QR code tidak valid. Pastikan QR code berisi informasi perangkat yang benar.');
-            }
-        });
-        if (window.jsQR) {
-            scanQRCode();
-        }
-        stopScanButton.addEventListener('click', function() {
-            stopScanner();
-        });
-    });
-
-    stopScanButton.addEventListener('click', function () {
-        scannerElement.style.display = 'none';
-        Quagga.stop();
     });
 
     function renderConnectedDevices() {
         connectedDevicesElement.innerHTML = '<h2>Perangkat Terhubung</h2>';
         if (connectedDevices.length === 0) {
-            connectedDevicesElement.innerHTML += '<p>Tidak ada perangkat terhubung. Pindai QR code untuk menambahkan perangkat.</p>';
+            connectedDevicesElement.innerHTML += '<p>Tidak ada perangkat terhubung. Masukkan ID perangkat untuk menambahkan perangkat.</p>';
             return;
         }
         connectedDevices.forEach((device, index) => {
