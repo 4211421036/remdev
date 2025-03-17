@@ -1,77 +1,102 @@
+/* General Styles */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    background-color: #f4f4f9;
+    color: #333;
     margin: 0;
     padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
 }
 
 .container {
-    max-width: 600px;
-    margin: 50px auto;
-    padding: 20px;
     background-color: #fff;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 100%;
 }
 
-h1 {
-    margin-bottom: 20px;
+h1, h2 {
+    color: #444;
 }
 
+p {
+    margin: 10px 0;
+}
+
+/* Device Info Section */
 #device-info {
     margin-bottom: 20px;
 }
 
-button {
-    padding: 10px 20px;
-    margin: 10px;
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #218838;
-}
-
-#qr-code {
-    margin: 20px auto;
-    width: 200px;
-    height: 200px;
-}
-
-#map {
-    width: 100%;
-    height: 300px;
-    margin-top: 20px;
-}
-
-#scanner {
-    margin: 20px auto;
-    text-align: center;
-}
-
-#interactive {
-    width: 100%;
-    height: 300px;
-    background-color: #000;
+#device-info h2 {
+    font-size: 1.5em;
     margin-bottom: 10px;
 }
 
-#stop-scan {
-    background-color: #dc3545;
+#device-info p {
+    font-size: 1em;
+    color: #555;
 }
 
-#stop-scan:hover {
-    background-color: #c82333;
+/* Add Device Section */
+.add-device-section {
+    margin-bottom: 20px;
+}
+
+#device-id-input {
+    width: calc(100% - 22px);
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+#add-device {
+    width: 100%;
+    padding: 10px;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+#add-device:hover {
+    background-color: #218838;
+}
+
+/* Connected Devices Section */
+#connected-devices {
+    margin-top: 20px;
+}
+
+#connected-devices h2 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
 }
 
 .connected-device {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
 }
 
-.connected-device:last-child {
-    border-bottom: none;
+.connected-device h3 {
+    font-size: 1.2em;
+    margin-bottom: 5px;
+}
+
+.connected-device p {
+    font-size: 1em;
+    color: #555;
+    margin: 5px 0;
 }
