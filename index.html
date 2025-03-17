@@ -15,11 +15,8 @@
         <div id="qr-code"></div>
         <button id="share-device">Bagikan Perangkat</button>
         <button id="play-sound">Bunyikan Perangkat</button>
-        <button id="scan-barcode">Scan Barcode</button>
-        <div id="scanner" style="display: none;">
-            <div id="interactive" class="viewport"></div>
-            <button id="stop-scan">Stop Scan</button>
-        </div>
+        <input type="text" id="device-id-input" placeholder="Masukkan ID Perangkat">
+        <button id="add-device">Tambahkan Perangkat</button>
         <div id="connected-devices">
             <!-- Daftar perangkat yang terhubung akan muncul di sini -->
         </div>
@@ -30,10 +27,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- Library untuk OpenStreetMap -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <!-- Library untuk Barcode Scanner (QuaggaJS) -->
-    <script src="https://cdn.jsdelivr.net/npm/quagga2/dist/quagga.min.js"></script>
-    <!-- Library untuk QR Code Scanning (jsQR sebagai backup) -->
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script src="scripts.js"></script>
 </body>
 </html>
