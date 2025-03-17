@@ -1,0 +1,36 @@
+name: Fetch Device Data
+
+on:
+  schedule:
+    - cron: '*/5 * * * *' # Jalankan setiap 5 menit
+  workflow_dispatch: # Bisa dijalankan manual
+  push:
+    branches:
+      - main
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install node-fetch
+
+      - name: Fetch data from Telegram bot
+        run: node fetchData.js
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update device data"
+          git push
