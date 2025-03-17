@@ -97,31 +97,40 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function playSound(deviceId = null) {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        oscillator.start();
-        let counter = 0;
-        const beepInterval = setInterval(() => {
-            if (counter % 2 === 0) gainNode.gain.value = 0.5;
-            else gainNode.gain.value = 0;
-            counter++;
-            if (counter >= 10) {
-                clearInterval(beepInterval);
-                oscillator.stop();
-            }
-        }, 300);
+        if (deviceId) {
+            // Kirim perintah ke perangkat yang ditambahkan untuk memainkan suara
+            alert(`Membunyikan perangkat dengan ID: ${deviceId}`);
+            // Di sini Anda bisa menambahkan kode untuk mengirim perintah ke perangkat yang ditambahkan
+        } else {
+            // Memainkan suara pada perangkat utama
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.type = 'square';
+            oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.start();
+            let counter = 0;
+            const beepInterval = setInterval(() => {
+                if (counter % 2 === 0) gainNode.gain.value = 0.5;
+                else gainNode.gain.value = 0;
+                counter++;
+                if (counter >= 10) {
+                    clearInterval(beepInterval);
+                    oscillator.stop();
+                }
+            }, 300);
+        }
     }
 
     playSoundButton.addEventListener('click', function() {
         if (connectedDevices.length > 0) {
             const deviceSelection = confirm('Bunyikan semua perangkat terhubung?');
             if (deviceSelection) {
-                playSound();
+                connectedDevices.forEach(device => {
+                    playSound(device.id);
+                });
                 alert('Membunyikan semua perangkat terhubung');
             }
         } else {
