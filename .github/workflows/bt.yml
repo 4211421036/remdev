@@ -2,7 +2,7 @@ name: Fetch Device Data
 
 on:
   schedule:
-    - cron: '*/5 * * * *' # Jalankan setiap 5 menit
+    - cron: '*/1 * * * *' # Jalankan setiap 5 menit
   workflow_dispatch: # Bisa dijalankan manual
   push:
     branches:
